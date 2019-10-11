@@ -349,8 +349,7 @@ process star_fusion {
         --runThreadN ${task.cpus} \\
         --outSAMstrandField intronMotif ${avail_mem} \\
         --readFilesCommand zcat \\
-        --chimOutJunctionFormat 1 \\
-        --sjdbOverhang ${params.read_length - 1} # Correction : take into account the read length at the mapping step
+        --chimOutJunctionFormat 1
 
     STAR-Fusion \\
         --genome_lib_dir ${reference} \\
@@ -486,7 +485,6 @@ process squid {
         --chimOutType SeparateSAMold --chimSegmentMin 20 --chimJunctionOverhangMin 12 --alignSJDBoverhangMin 10 --outReadsUnmapped Fastx --outSAMstrandField intronMotif \\
         --outSAMtype BAM SortedByCoordinate ${avail_mem} \\
         --readFilesCommand zcat \\
-        --sjdbOverhang ${params.read_length - 1} # Correction : take into account the read length at the mapping step
 
     mv Aligned.sortedByCoord.out.bam ${name}Aligned.sortedByCoord.out.bam
     samtools view -bS Chimeric.out.sam > ${name}Chimeric.out.bam
