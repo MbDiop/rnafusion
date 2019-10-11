@@ -274,7 +274,7 @@ if (params.star_index) {
         .fromPath(params.star_index)
         .ifEmpty { exit 1, "STAR index not found: ${params.star_index}" }
         //.into { star_index_squid; star_index_star_fusion }
-        .set { star_index_squid; }
+        .set { star_index_squid }
 
 } else {
     process build_star_index {
@@ -321,7 +321,7 @@ process star_fusion {
 
     input:
     set val(name), file(reads) from read_files_star_fusion
-    //file star_index_star_fusion
+    // Correction of : file star_index_star_fusion
     file reference from star_fusion_ref
 
     output:
@@ -332,7 +332,7 @@ process star_fusion {
     def avail_mem = task.memory ? "--limitBAMsortRAM ${task.memory.toBytes() - 100000000}" : ''
     option = params.singleEnd ? "--left_fq ${reads[0]}" : "--left_fq ${reads[0]} --right_fq ${reads[1]}"
 
-    //--genomeDir ${star_index_star_fusion} \\
+    //Correction of --genomeDir ${star_index_star_fusion}
     """
     STAR \\
         --genomeDir ${reference}/ref_genome.fa.star.idx \\
@@ -349,7 +349,8 @@ process star_fusion {
         --runThreadN ${task.cpus} \\
         --outSAMstrandField intronMotif ${avail_mem} \\
         --readFilesCommand zcat \\
-        --chimOutJunctionFormat 1
+        --chimOutJunctionFormat 1 \\
+        --sjdbOverhang ${params.read_length - 1} # Correction : take into account the read length at the mapping step
 
     STAR-Fusion \\
         --genome_lib_dir ${reference} \\
@@ -484,7 +485,9 @@ process squid {
         --twopassMode Basic \\
         --chimOutType SeparateSAMold --chimSegmentMin 20 --chimJunctionOverhangMin 12 --alignSJDBoverhangMin 10 --outReadsUnmapped Fastx --outSAMstrandField intronMotif \\
         --outSAMtype BAM SortedByCoordinate ${avail_mem} \\
-        --readFilesCommand zcat
+        --readFilesCommand zcat \\
+        --sjdbOverhang ${params.read_length - 1} # Correction : take into account the read length at the mapping step
+
     mv Aligned.sortedByCoord.out.bam ${name}Aligned.sortedByCoord.out.bam
     samtools view -bS Chimeric.out.sam > ${name}Chimeric.out.bam
     squid -b ${name}Aligned.sortedByCoord.out.bam -c ${name}Chimeric.out.bam -o fusions
@@ -523,8 +526,8 @@ process summary {
     transformer.py -i ${ericscript} -t ericscript
     transformer.py -i ${pizzly} -t pizzly
     transformer.py -i ${squid} -t squid
-    cp summary.yaml summary.yaml.bak
-    grep -v null summary.yaml > summary && mv summary summary.yaml
+    cp summary.yaml summary.yaml.bak # Correction bug when no fusions detected
+    grep -v null summary.yaml > summary && mv summary summary.yaml # Correction bug when no fusions detected
     generate_report.py fusions.txt summary.yaml -s ${name} -o . ${extra}
     """
 }
